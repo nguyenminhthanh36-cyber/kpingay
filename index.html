@@ -2400,11 +2400,18 @@
       const grp = sortEmpList(deptKey, employees.filter(e => e.type === type));
       if (!grp.length) return '';
 
+      // Controller: hiển thị thêm cột "Tổng điểm (tính Kiểm kho)" bên cạnh Tổng điểm gốc.
+      // Kiểm kho vẫn là cột tham khảo (TK) trong bảng hạng mục, chỉ được cộng thêm ở cột tổng điểm thứ 2 này.
+      const isController = deptKey === 'Controller';
+
       const tableId = `kpi-${deptKey}-${type}`.replace(/\s+/g,'_');
       const theadCols = shown.map(cat => {
         const isCounted = counted.has(cat);
         return `<th class="${isCounted ? '' : 'ref-col'}">${esc(cat)}${isCounted ? '' : ' <span title="Chỉ tham khảo, không cộng vào tổng điểm">(TK)</span>'}</th>`;
       }).join('');
+      const totalHeadCols = isController
+        ? `<th class="total-col">Tổng điểm (không tính Kiểm kho)</th><th class="total-col">Tổng điểm (tính Kiểm kho)</th>`
+        : `<th class="total-col">Tổng điểm</th>`;
 
       const rowsData = grp.map(e => {
         const detail = detailAll[e.email] || {};
@@ -2413,21 +2420,28 @@
           const v = detail[cat] || 0;
           return `<td class="${isCounted ? '' : 'ref-col'}">${fmtNum(v)}</td>`;
         }).join('');
+        const totalCells = isController
+          ? `<td class="total-col">${fmtNum(e.total)}</td><td class="total-col">${fmtNum((e.total||0) + (detail['Kiểm kho']||0))}</td>`
+          : `<td class="total-col">${fmtNum(e.total)}</td>`;
         const html = `<tr>
           <td>
             <div class="name-cell">${esc(e.name)}</div>
             <div class="email-cell">${esc(e.email)}</div>
           </td>
           ${cells}
-          <td class="total-col">${fmtNum(e.total)}</td>
+          ${totalCells}
         </tr>`;
         return { html, name: e.name.toLowerCase(), email: e.email.toLowerCase() };
       });
 
       const sums = shown.map(cat => grp.reduce((s,e) => s + ((detailAll[e.email]||{})[cat] || 0), 0));
       const totalSum = grp.reduce((s,e) => s + (e.total||0), 0);
+      const totalSumWithKho = grp.reduce((s,e) => s + (e.total||0) + ((detailAll[e.email]||{})['Kiểm kho']||0), 0);
       const footerCells = sums.map(s => `<td>${fmtNum(s)}</td>`).join('');
-      const colCount = shown.length + 2;
+      const footerTotalCells = isController
+        ? `<td class="total-col">${fmtNum(totalSum)}</td><td class="total-col">${fmtNum(totalSumWithKho)}</td>`
+        : `<td class="total-col">${fmtNum(totalSum)}</td>`;
+      const colCount = shown.length + (isController ? 3 : 2);
 
       registerTable(tableId, rowsData, colCount);
 
@@ -2436,9 +2450,9 @@
         <h3>Bảng tổng KPI <span class="badge ${type==='Chính thức'?'ct':'tv'} type-badge">${type}</span></h3>
         <div class="panel table-scroll">
           <table>
-            <thead><tr><th>Nhân viên</th>${theadCols}<th class="total-col">Tổng điểm</th></tr></thead>
+            <thead><tr><th>Nhân viên</th>${theadCols}${totalHeadCols}</tr></thead>
             <tbody id="tbody-${tableId}"></tbody>
-            <tfoot><tr><td>Tổng cộng (${grp.length} NV)</td>${footerCells}<td class="total-col">${fmtNum(totalSum)}</td></tr></tfoot>
+            <tfoot><tr><td>Tổng cộng (${grp.length} NV)</td>${footerCells}${footerTotalCells}</tr></tfoot>
           </table>
           <div class="pagination" id="pag-${tableId}"></div>
         </div>
