@@ -1,0 +1,2698 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard KPI theo ngày — Boxme</title>
+<style>
+  :root{
+    --bg:#fdeef4; --panel:#ffffff; --panel2:#fbe3ec; --border:#f0cddb;
+    --text:#16181d; --muted:#7a6b73; --accent:#1d5fe0; --accent-light:#e4edff;
+    --green:#178a4c; --red:#d64545; --amber:#b8790a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);}
+  header{position:sticky;top:0;z-index:20;background:#ffffffee;backdrop-filter:blur(6px);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;flex-wrap:wrap;align-items:center;gap:16px;justify-content:space-between;}
+  header h1{font-size:18px;margin:0;font-weight:700;color:var(--text);}
+  header .meta{font-size:12px;color:var(--muted);}
+  select, input[type=text]{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;outline:none;}
+  select:focus, input[type=text]:focus{border-color:var(--accent);}
+  main{padding:24px;max-width:1280px;margin:0 auto;}
+  .toolbar-top{display:flex;gap:10px;margin-bottom:20px;}
+  .toolbar-top input{flex:1;max-width:340px;}
+
+  .tabs{display:flex;gap:6px;border-bottom:2px solid var(--border);margin-bottom:24px;flex-wrap:wrap;position:sticky;top:73px;background:var(--bg);z-index:15;padding-top:4px;}
+  .tab-btn{appearance:none;border:none;background:transparent;color:var(--muted);font-size:14px;font-weight:600;padding:10px 18px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;border-radius:8px 8px 0 0;transition:color .15s,background .15s;}
+  .tab-btn:hover{color:var(--text);background:var(--panel2);}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--accent-light);}
+  .tab-btn .tab-count{font-weight:400;color:var(--muted);font-size:12px;margin-left:4px;}
+  .tab-btn.active .tab-count{color:var(--accent);}
+
+  .dept-section{display:none;}
+  .dept-section.active{display:block;}
+  .dept-header-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-bottom:10px;border-bottom:2px solid var(--border);margin-bottom:4px;}
+  .dept-title{display:flex;align-items:baseline;gap:10px;font-size:20px;font-weight:800;color:var(--text);}
+  .dept-title .dept-count{font-size:12px;font-weight:400;color:var(--muted);}
+  .type-filter{display:flex;gap:4px;background:var(--panel2);padding:4px;border-radius:9px;}
+  .type-filter button{appearance:none;border:none;background:transparent;color:var(--muted);font-size:12px;font-weight:600;padding:6px 12px;border-radius:6px;cursor:pointer;}
+  .type-filter button.active{background:var(--panel);color:var(--accent);box-shadow:0 1px 2px rgba(20,30,60,.08);}
+  .subsection{margin-top:18px;}
+  .kpi-multi-row{display:flex;flex-wrap:nowrap;gap:14px;align-items:flex-start;overflow-x:auto;padding-bottom:6px;}
+  .kpi-multi-row .panel{margin-bottom:0;}
+  .subsection h3{font-size:13px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:700;}
+  .subsection h3 .type-badge{margin-left:6px;}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 2px rgba(20,30,60,.04);width:fit-content;max-width:100%;}
+  .table-scroll{overflow-x:auto;}
+  table{width:auto;border-collapse:collapse;font-size:13px;}
+  th,td{padding:8px 14px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;color:var(--text);}
+  th:first-child,td:first-child{text-align:left;}
+  th.stt-col,td.stt-col{text-align:center!important;width:36px;color:var(--muted);font-weight:600;}
+  th{color:var(--muted);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.03em;background:var(--panel2);position:sticky;top:0;}
+  th.ref-col{color:#a68a95;font-weight:500;font-style:italic;}
+  td.ref-col{color:#a68a95;}
+  th.total-col,td.total-col{color:var(--accent);font-weight:700;}
+  tbody tr:hover{background:var(--panel2);}
+  tfoot td{font-weight:700;background:var(--panel2);border-top:2px solid var(--border);border-bottom:none;color:var(--text);}
+  tfoot td.total-col{color:var(--accent);}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+  .badge.ct{background:#e2eeff;color:#1d5fe0;}
+  .badge.tv{background:#fdecd2;color:#b8790a;}
+  .name-cell{font-weight:600;text-align:left;color:var(--text);}
+  .email-cell{color:var(--muted);font-size:11px;text-align:left;font-weight:400;}
+  .pagination{display:flex;gap:6px;padding:10px 14px;justify-content:flex-end;align-items:center;background:var(--panel);flex-wrap:wrap;}
+  .pg-btn{border:1px solid var(--border);background:var(--panel);color:var(--muted);font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;min-width:30px;}
+  .pg-btn:hover:not(:disabled){background:var(--panel2);color:var(--text);}
+  .pg-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .pg-btn:disabled{opacity:.35;cursor:not-allowed;}
+  footer{padding:24px;text-align:center;color:var(--muted);font-size:12px;}
+  .empty{padding:20px;text-align:center;color:var(--muted);font-size:13px;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>📊 Dashboard KPI theo ngày</h1>
+    <div class="meta" id="metaInfo">—</div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <select id="monthSelect"></select>
+  </div>
+</header>
+<main>
+
+  <div class="toolbar-top">
+    <input type="text" id="globalSearch" placeholder="Tìm theo tên hoặc email...">
+  </div>
+
+  <div class="tabs" id="tabBar"></div>
+
+  <div id="deptContainer"></div>
+
+</main>
+<footer>
+  Dashboard cập nhật từ file KPI.csv (cộng dồn từ đầu tháng) · Cập nhật lần cuối: <span id="lastUpdate"></span>
+</footer>
+<script>
+
+    const RAW_EMPLOYEES = {};
+    const HO_EMPS = {};
+    const RAW_EMP_DETAIL = {};
+    const P1DATA = {};
+    const WORKDAYS = {};
+    const META = {};
+
+    RAW_EMPLOYEES['2026-07'] = [
+  {
+    "email": "hentv@boxme.asia",
+    "name": "Trương Văn Hẹn",
+    "pos": "Receiver",
+    "type": "Chính thức",
+    "kpi_min": 500000,
+    "total": 775900,
+    "pct": 155.2,
+    "main_job": "Nhận hàng",
+    "flag": "⭐"
+  },
+  {
+    "email": "vietnt@boxme.asia",
+    "name": "Nguyễn Thanh Việt",
+    "pos": "Receiver",
+    "type": "Chính thức",
+    "kpi_min": 500000,
+    "total": 638605,
+    "pct": 127.7,
+    "main_job": "Nhận hàng",
+    "flag": "⭐"
+  },
+  {
+    "email": "minhdt@boxme.asia",
+    "name": "Đặng Thành Minh",
+    "pos": "Receiver",
+    "type": "Chính thức",
+    "kpi_min": 500000,
+    "total": 520688,
+    "pct": 104.1,
+    "main_job": "Nhận hàng",
+    "flag": "⭐"
+  },
+  {
+    "email": "tuanndm@boxme.asia",
+    "name": "Nguyễn Đỗ Minh Tuấn",
+    "pos": "Receiver",
+    "type": "Chính thức",
+    "kpi_min": 500000,
+    "total": 517815,
+    "pct": 103.6,
+    "main_job": "Nhận hàng",
+    "flag": ""
+  },
+  {
+    "email": "thaidh@boxme.asia",
+    "name": "Đinh Hoàng Thái",
+    "pos": "Receiver",
+    "type": "Chính thức",
+    "kpi_min": 500000,
+    "total": 515716,
+    "pct": 103.1,
+    "main_job": "Nhận hàng",
+    "flag": ""
+  },
+  {
+    "email": "sonth@boxme.asia",
+    "name": "Thái Hồng Sơn",
+    "pos": "Receiver",
+    "type": "Chính thức",
+    "kpi_min": 500000,
+    "total": 515113,
+    "pct": 103.0,
+    "main_job": "Nhận hàng",
+    "flag": ""
+  },
+  {
+    "email": "chuyendt@boxme.asia",
+    "name": "Đậu Thị Chuyên",
+    "pos": "Receiver",
+    "type": "Chính thức",
+    "kpi_min": 500000,
+    "total": 497560,
+    "pct": 99.5,
+    "main_job": "Nhận hàng",
+    "flag": ""
+  },
+  {
+    "email": "longnhk@boxme.asia",
+    "name": "Nguyễn Hữu Kim Long",
+    "pos": "Receiver",
+    "type": "Chính thức",
+    "kpi_min": 500000,
+    "total": 448448,
+    "pct": 89.7,
+    "main_job": "Nhận hàng",
+    "flag": ""
+  },
+  {
+    "email": "tuanp@boxme.asia",
+    "name": "Phạm Tuấn",
+    "pos": "Controller",
+    "type": "Chính thức",
+    "kpi_min": 90000,
+    "total": 195119,
+    "pct": 216.8,
+    "main_job": "Lưu kho DR",
+    "flag": "⭐"
+  },
+  {
+    "email": "doanlv@boxme.vn",
+    "name": "Lê Văn Đoàn",
+    "pos": "Controller",
+    "type": "Chính thức",
+    "kpi_min": 90000,
+    "total": 176850,
+    "pct": 196.5,
+    "main_job": "Lưu kho DR",
+    "flag": "⭐"
+  },
+  {
+    "email": "hungpq@boxme.asia",
+    "name": "Phan Quốc Hưng",
+    "pos": "Controller",
+    "type": "Chính thức",
+    "kpi_min": 90000,
+    "total": 142975,
+    "pct": 158.9,
+    "main_job": "Lưu kho DR",
+    "flag": "⭐"
+  },
+  {
+    "email": "hieutm1@boxme.asia",
+    "name": "Trần Minh Hiếu",
+    "pos": "Controller",
+    "type": "Chính thức",
+    "kpi_min": 90000,
+    "total": 131284,
+    "pct": 145.9,
+    "main_job": "Lưu kho DR",
+    "flag": ""
+  },
+  {
+    "email": "quangnt2@boxme.asia",
+    "name": "Nguyễn Thế Quang",
+    "pos": "Controller",
+    "type": "Chính thức",
+    "kpi_min": 90000,
+    "total": 127568,
+    "pct": 141.7,
+    "main_job": "Lưu kho DR",
+    "flag": ""
+  },
+  {
+    "email": "haint@boxme.asia",
+    "name": "Nguyễn Tứ Hải",
+    "pos": "Controller",
+    "type": "Chính thức",
+    "kpi_min": 90000,
+    "total": 125710,
+    "pct": 139.7,
+    "main_job": "Lưu kho DR",
+    "flag": ""
+  },
+  {
+    "email": "ngocnp@boxme.vn",
+    "name": "Nguyễn Phú Ngọc",
+    "pos": "Controller",
+    "type": "Chính thức",
+    "kpi_min": 90000,
+    "total": 112092,
+    "pct": 124.5,
+    "main_job": "Lưu kho DR",
+    "flag": ""
+  },
+  {
+    "email": "quangnt1@boxme.asia",
+    "name": "Nguyễn Thành Quang",
+    "pos": "Controller",
+    "type": "Chính thức",
+    "kpi_min": 90000,
+    "total": 102996,
+    "pct": 114.4,
+    "main_job": "Lưu kho DR",
+    "flag": ""
+  },
+  {
+    "email": "ngocptm@boxme.asia",
+    "name": "Phan Thị Mỹ Ngọc",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "kpi_min": 50000,
+    "total": 65467,
+    "pct": 130.9,
+    "main_job": "Lấy hàng",
+    "flag": "⭐"
+  },
+  {
+    "email": "viettq@boxme.asia",
+    "name": "Trịnh Quốc Việt",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "kpi_min": 50000,
+    "total": 56254,
+    "pct": 112.5,
+    "main_job": "Lấy hàng",
+    "flag": "⭐"
+  },
+  {
+    "email": "huytg@boxme.asia",
+    "name": "Trương Gia Huy",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "kpi_min": 50000,
+    "total": 56145,
+    "pct": 112.3,
+    "main_job": "Lấy hàng",
+    "flag": "⭐"
+  },
+  {
+    "email": "ngannt1@boxme.asia",
+    "name": "Nguyễn Thanh Ngàn",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "kpi_min": 50000,
+    "total": 54911,
+    "pct": 109.8,
+    "main_job": "Lấy hàng",
+    "flag": ""
+  },
+  {
+    "email": "vonv@boxme.asia",
+    "name": "Nguyễn Văn Vô",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "kpi_min": 50000,
+    "total": 52489,
+    "pct": 105.0,
+    "main_job": "Lấy hàng",
+    "flag": ""
+  },
+  {
+    "email": "cuongnc1@boxme.asia",
+    "name": "Nguyễn Chí Cường",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "kpi_min": 50000,
+    "total": 47885,
+    "pct": 95.8,
+    "main_job": "Lấy hàng",
+    "flag": ""
+  },
+  {
+    "email": "haitm@boxme.asia",
+    "name": "Trần Minh Hải",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "kpi_min": 50000,
+    "total": 39379,
+    "pct": 78.8,
+    "main_job": "Lấy hàng",
+    "flag": "🔴"
+  },
+  {
+    "email": "nguyenhk@boxme.asia",
+    "name": "Huỳnh Khắc Nguyên",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "kpi_min": 50000,
+    "total": 39191,
+    "pct": 78.4,
+    "main_job": "Lấy hàng",
+    "flag": "🔴"
+  },
+  {
+    "email": "thachhn@boxme.asia",
+    "name": "Hà Ngọc Thạch",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "kpi_min": 50000,
+    "total": 39013,
+    "pct": 78.0,
+    "main_job": "Lấy hàng",
+    "flag": "🔴"
+  },
+  {
+    "email": "danhnt1@boxme.asia",
+    "name": "Nguyễn Thành Danh",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "kpi_min": 50000,
+    "total": 38438,
+    "pct": 76.9,
+    "main_job": "Lấy hàng",
+    "flag": "🔴"
+  },
+  {
+    "email": "duynd1@boxme.asia",
+    "name": "Nguyễn Đình Duy",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "kpi_min": 50000,
+    "total": 37590,
+    "pct": 75.2,
+    "main_job": "Lấy hàng",
+    "flag": "🔴"
+  },
+  {
+    "email": "phucnh1@boxme.asia",
+    "name": "Nguyễn Hoàng Phúc",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "kpi_min": 50000,
+    "total": 35519,
+    "pct": 71.0,
+    "main_job": "Lấy hàng",
+    "flag": "🔴"
+  },
+  {
+    "email": "khuongnh@boxme.asia",
+    "name": "Nguyễn Hoài Khương",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "kpi_min": 50000,
+    "total": 28911,
+    "pct": 57.8,
+    "main_job": "Lấy hàng",
+    "flag": "🔴"
+  },
+  {
+    "email": "quyenltb1@boxme.asia",
+    "name": "Lê Thị Bích Quyên",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 7045,
+    "pct": 140.9,
+    "main_job": "Đóng gói",
+    "flag": "⭐"
+  },
+  {
+    "email": "lienvtt@boxme.asia",
+    "name": "Vũ Thị Thùy Liên",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 6767,
+    "pct": 135.3,
+    "main_job": "Đóng gói",
+    "flag": "⭐"
+  },
+  {
+    "email": "khamnd@boxme.asia",
+    "name": "Nguyễn Đức Khâm",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 6505,
+    "pct": 130.1,
+    "main_job": "Đóng gói",
+    "flag": "⭐"
+  },
+  {
+    "email": "vynt@boxme.asia",
+    "name": "Ngô Thị Vy",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 6158,
+    "pct": 123.2,
+    "main_job": "Đóng gói",
+    "flag": ""
+  },
+  {
+    "email": "hienpt@boxme.asia",
+    "name": "Phạm Thị Hiển",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 5970,
+    "pct": 119.4,
+    "main_job": "Đóng gói",
+    "flag": ""
+  },
+  {
+    "email": "thupld@boxme.asia",
+    "name": "Phạm Lý Duy Thư",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 5655,
+    "pct": 113.1,
+    "main_job": "Đóng gói",
+    "flag": ""
+  },
+  {
+    "email": "hungbum@boxme.asia",
+    "name": "Bùi Minh Hưng",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 5148,
+    "pct": 103.0,
+    "main_job": "Đóng gói",
+    "flag": ""
+  },
+  {
+    "email": "manhlt1@boxme.asia",
+    "name": "Lộc Thế Mạnh",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 4921,
+    "pct": 98.4,
+    "main_job": "Đóng gói",
+    "flag": ""
+  },
+  {
+    "email": "giaunv@boxme.asia",
+    "name": "Nguyễn Văn Giàu",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 4874,
+    "pct": 97.5,
+    "main_job": "Đóng gói",
+    "flag": ""
+  },
+  {
+    "email": "tramntp@boxme.asia",
+    "name": "Nguyễn Thị Phúc Trâm",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 4839,
+    "pct": 96.8,
+    "main_job": "Đóng gói",
+    "flag": ""
+  },
+  {
+    "email": "huyentt@boxme.asia",
+    "name": "Thái Thị Huyền",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 4727,
+    "pct": 94.5,
+    "main_job": "Đóng gói",
+    "flag": ""
+  },
+  {
+    "email": "anhlp@boxme.asia",
+    "name": "Lê Phạm Anh",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 4603,
+    "pct": 92.1,
+    "main_job": "Đóng gói",
+    "flag": ""
+  },
+  {
+    "email": "giaultn@boxme.asia",
+    "name": "Lê Thị Ngọc Giàu",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 4490,
+    "pct": 89.8,
+    "main_job": "Đóng gói",
+    "flag": ""
+  },
+  {
+    "email": "tuyenntn@boxme.asia",
+    "name": "Nguyễn Thị Ngọc Tuyền",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 4310,
+    "pct": 86.2,
+    "main_job": "Đóng gói",
+    "flag": ""
+  },
+  {
+    "email": "lent2@boxme.asia",
+    "name": "Nguyễn Thị Lê",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 4292,
+    "pct": 85.8,
+    "main_job": "Đóng gói",
+    "flag": ""
+  },
+  {
+    "email": "anhth@boxme.asia",
+    "name": "Trần Hoàng Anh",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 4224,
+    "pct": 84.5,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "nhuvhm@boxme.asia",
+    "name": "Võ Hồ Mỹ Như",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 4044,
+    "pct": 80.9,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "baivk@boxme.asia",
+    "name": "Vũ Kim Bài",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 4034,
+    "pct": 80.7,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "autm@boxme.asia",
+    "name": "Trần Mỹ Âu",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 3995,
+    "pct": 79.9,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "thuha@boxme.asia",
+    "name": "Huỳnh Anh Thư",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 3790,
+    "pct": 75.8,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "datpv@boxme.asia",
+    "name": "Võ Phúc Đạt",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 3750,
+    "pct": 75.0,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "sonlv@boxme.asia",
+    "name": "Lê Văn Sơn",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 3648,
+    "pct": 73.0,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "hoald@boxme.asia",
+    "name": "Lưu Đức Hòa",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 3622,
+    "pct": 72.4,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "trannnb@boxme.asia",
+    "name": "Nguyễn Ngọc Bích Trân",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 3591,
+    "pct": 71.8,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "thuyntt1@boxme.asia",
+    "name": "Nguyễn Thị Thanh Thúy",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 3522,
+    "pct": 70.4,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "bunhny@boxme.asia",
+    "name": "Neáng Bunh Ny",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 3521,
+    "pct": 70.4,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "nganltt@boxme.asia",
+    "name": "Lê Thị Thu Ngân",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 3514,
+    "pct": 70.3,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "trungnd@boxme.asia",
+    "name": "Nguyễn Đức Trung",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 3465,
+    "pct": 69.3,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "truongtv@boxme.asia",
+    "name": "Thạch Văn Trương",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 3385,
+    "pct": 67.7,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "083199004325@boxme.asia",
+    "name": "Huỳnh Thị Ngọc Diễm",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 3323,
+    "pct": 66.5,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "nhutth@boxme.asia",
+    "name": "Trần Hoàng Nhứt",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 3260,
+    "pct": 65.2,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "thuna1@boxme.asia",
+    "name": "Nguyễn Anh Thư",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 2684,
+    "pct": 53.7,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "089306021396@boxme.asia",
+    "name": "Văn Thị Yến Nhi",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 2657,
+    "pct": 53.1,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "khangtn@boxme.asia",
+    "name": "Nguyễn Trường Khang",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 2580,
+    "pct": 51.6,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "nhihty1@boxme.asia",
+    "name": "Huỳnh Thị Yến Nhi",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 1297,
+    "pct": 25.9,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "056301001736@boxme.asia",
+    "name": "Trần Nguyễn Trà My",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 1220,
+    "pct": 24.4,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "080204002140@boxme.asia",
+    "name": "Lê Nguyễn Minh Luân",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 750,
+    "pct": 15.0,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "096192007183@boxme.asia",
+    "name": "lâm kiều ny",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 722,
+    "pct": 14.4,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "087306016628@boxme.asia",
+    "name": "Thái Thị Ngọc Hân",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 577,
+    "pct": 11.5,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "079304034332@boxme.asia",
+    "name": "Hà Thục Trang",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 525,
+    "pct": 10.5,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "079192026838@boxme.asia",
+    "name": "Giang Thụy Kim Xuân",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 478,
+    "pct": 9.6,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "079200008044@boxme.asia",
+    "name": "NGUYEN HOANG KHANG",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 408,
+    "pct": 8.2,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "089184003797@boxme.asia",
+    "name": "nguyễn thị bích tuyền",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 391,
+    "pct": 7.8,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "079308034900@boxme.asia",
+    "name": "Yến Vân",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 345,
+    "pct": 6.9,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "051304011465@boxme.asia",
+    "name": "Trần Thị Thu Trâm",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 340,
+    "pct": 6.8,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "079307045210@boxme.asia",
+    "name": "Nguyễn Thị Thanh Trúc",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 312,
+    "pct": 6.2,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "079308017763@boxme.asia",
+    "name": "Tuyết Trinh",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 230,
+    "pct": 4.6,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "051305008913@boxme.asia",
+    "name": "Nguyễn Thị Thu Hiền",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 221,
+    "pct": 4.4,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "075305001589@boxme.asia",
+    "name": "Trần Tuyết Trinh",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 217,
+    "pct": 4.3,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "087196015389@boxme.asia",
+    "name": "Thạch Thiên",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 143,
+    "pct": 2.9,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "091307001625@boxme.asia",
+    "name": "Trần Quỳnh Anh",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 111,
+    "pct": 2.2,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "079198006497@boxme.asia",
+    "name": "Trần Sở Nhi",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 105,
+    "pct": 2.1,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "079198025451@boxme.asia",
+    "name": "Lê Kim Tiền",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 105,
+    "pct": 2.1,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "072307001812@boxme.asia",
+    "name": "Phạm Thị Thanh Quí",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 97,
+    "pct": 1.9,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "087307012438@boxme.asia",
+    "name": "hồ thị thúy ngân",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 95,
+    "pct": 1.9,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "079307009813@boxme.asia",
+    "name": "Poi Kim",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 92,
+    "pct": 1.8,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "duytnh@boxme.asia",
+    "name": "Thạch Nguyễn Hữu Duy",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "kpi_min": 5000,
+    "total": 79,
+    "pct": 1.6,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "095307007396@boxme.asia",
+    "name": "Lâm Thái Phương",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 75,
+    "pct": 1.5,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "060307010952@boxme.asia",
+    "name": "Nguyễn Hà My",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 74,
+    "pct": 1.5,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "096194001950@boxme.asia",
+    "name": "Nguyễn Hồng Nhiên",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 74,
+    "pct": 1.5,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "075304020567@boxme.asia",
+    "name": "Trịnh phương thi",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 74,
+    "pct": 1.5,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "079304000887@boxme.asia",
+    "name": "Nhan Thuý Hạnh",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 71,
+    "pct": 1.4,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "079307018723@boxme.asia",
+    "name": "Khanh Khanh",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 68,
+    "pct": 1.4,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "094307012233@boxme.asia",
+    "name": "Nguyễn Lâm Kiều My",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 67,
+    "pct": 1.3,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "052306007501@boxme.asia",
+    "name": "Tran Thi Nhu Quynh",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 21,
+    "pct": 0.4,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "052308003772@boxme.asia",
+    "name": "Trần Hồng Phúc",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 18,
+    "pct": 0.4,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  },
+  {
+    "email": "051207022323@boxme.asia",
+    "name": "Nguyễn Võ Hồng Minh",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "kpi_min": 5000,
+    "total": 13,
+    "pct": 0.3,
+    "main_job": "Đóng gói",
+    "flag": "🔴"
+  }
+];
+
+    HO_EMPS['2026-07'] = [
+  {
+    "email": "truongnn@boxme.asia",
+    "name": "Nguyễn Nhựt Trường",
+    "pos": "Handover",
+    "type": "Chính thức",
+    "kpi_min": null,
+    "total": 78681,
+    "pct": null,
+    "main_job": "Bàn giao",
+    "flag": ""
+  },
+  {
+    "email": "thongnm1@boxme.asia",
+    "name": "Nguyễn Minh Thông",
+    "pos": "Handover",
+    "type": "Chính thức",
+    "kpi_min": null,
+    "total": 77323,
+    "pct": null,
+    "main_job": "Bàn giao",
+    "flag": ""
+  },
+  {
+    "email": "lamtd@boxme.asia",
+    "name": "Trịnh Duy Lâm",
+    "pos": "Handover",
+    "type": "Chính thức",
+    "kpi_min": null,
+    "total": 75178,
+    "pct": null,
+    "main_job": "Bàn giao",
+    "flag": ""
+  }
+];
+
+    RAW_EMP_DETAIL['2026-07'] = {
+  "hentv@boxme.asia": {
+    "Đóng gói": 179,
+    "Kiểm hoàn": 1957,
+    "Nhận hàng": 656063,
+    "Hạ tải": 118928,
+    "Dán Nhãn": 910
+  },
+  "vietnt@boxme.asia": {
+    "Kiểm hoàn": 1753,
+    "Nhận hàng": 518549,
+    "Hạ tải": 92266,
+    "Dán Nhãn": 27790
+  },
+  "minhdt@boxme.asia": {
+    "Kiểm hoàn": 1404,
+    "Nhận hàng": 450091,
+    "Hạ tải": 70597
+  },
+  "tuanndm@boxme.asia": {
+    "Kiểm hoàn": 1747,
+    "Nhận hàng": 449032,
+    "Hạ tải": 68783
+  },
+  "thaidh@boxme.asia": {
+    "Kiểm hoàn": 1034,
+    "Nhận hàng": 468186,
+    "Hạ tải": 47529
+  },
+  "sonth@boxme.asia": {
+    "Đóng gói": 148,
+    "Kiểm hoàn": 1288,
+    "Nhận hàng": 461798,
+    "Hạ tải": 47435,
+    "Dán Nhãn": 5880
+  },
+  "chuyendt@boxme.asia": {
+    "Kiểm hoàn": 1153,
+    "Nhận hàng": 462108,
+    "Hạ tải": 35452
+  },
+  "longnhk@boxme.asia": {
+    "Kiểm hoàn": 1275,
+    "Nhận hàng": 354103,
+    "Hạ tải": 84265,
+    "Dán Nhãn": 10080
+  },
+  "tuanp@boxme.asia": {
+    "Đóng gói": 236,
+    "Lưu kho DR": 121064,
+    "Lưu kho PA": 10820,
+    "Chuyển vị trí": 63234,
+    "Kiểm kho": 46282
+  },
+  "doanlv@boxme.vn": {
+    "Lưu kho DR": 119933,
+    "Lưu kho PA": 10873,
+    "Chuyển vị trí": 46044,
+    "Kiểm kho": 21284
+  },
+  "hungpq@boxme.asia": {
+    "Lưu kho DR": 93721,
+    "Lưu kho PA": 13533,
+    "Chuyển vị trí": 35721,
+    "Kiểm kho": 19815
+  },
+  "hieutm1@boxme.asia": {
+    "Lưu kho DR": 93681,
+    "Lưu kho PA": 10310,
+    "Chuyển vị trí": 27293,
+    "Kiểm kho": 18114
+  },
+  "quangnt2@boxme.asia": {
+    "Đóng gói": 153,
+    "Lưu kho DR": 90666,
+    "Lưu kho PA": 8604,
+    "Chuyển vị trí": 28298,
+    "Kiểm kho": 23908
+  },
+  "haint@boxme.asia": {
+    "Đóng gói": 241,
+    "Lưu kho DR": 107724,
+    "Lưu kho PA": 8817,
+    "Chuyển vị trí": 9169,
+    "Kiểm kho": 302
+  },
+  "ngocnp@boxme.vn": {
+    "Lưu kho DR": 102365,
+    "Lưu kho PA": 5049,
+    "Chuyển vị trí": 4678,
+    "Kiểm kho": 16508
+  },
+  "quangnt1@boxme.asia": {
+    "Đóng gói": 141,
+    "Lưu kho DR": 81304,
+    "Lưu kho PA": 8429,
+    "Chuyển vị trí": 13262,
+    "Kiểm kho": 17001
+  },
+  "ngocptm@boxme.asia": {
+    "Lấy hàng": 65467
+  },
+  "viettq@boxme.asia": {
+    "Lấy hàng": 56254,
+    "Lưu kho PA": 261
+  },
+  "huytg@boxme.asia": {
+    "Lấy hàng": 56145
+  },
+  "ngannt1@boxme.asia": {
+    "Lấy hàng": 54911,
+    "Lưu kho DR": 249,
+    "Lưu kho PA": 4714,
+    "Chuyển vị trí": 540
+  },
+  "vonv@boxme.asia": {
+    "Lấy hàng": 52489
+  },
+  "cuongnc1@boxme.asia": {
+    "Lấy hàng": 47885
+  },
+  "haitm@boxme.asia": {
+    "Lấy hàng": 39379
+  },
+  "nguyenhk@boxme.asia": {
+    "Lấy hàng": 39191
+  },
+  "thachhn@boxme.asia": {
+    "Lấy hàng": 39013
+  },
+  "danhnt1@boxme.asia": {
+    "Lấy hàng": 38438
+  },
+  "duynd1@boxme.asia": {
+    "Lấy hàng": 37590,
+    "Lưu kho PA": 342
+  },
+  "phucnh1@boxme.asia": {
+    "Lấy hàng": 35519
+  },
+  "khuongnh@boxme.asia": {
+    "Lấy hàng": 28911
+  },
+  "quyenltb1@boxme.asia": {
+    "Đóng gói": 7045
+  },
+  "lienvtt@boxme.asia": {
+    "Đóng gói": 6767
+  },
+  "khamnd@boxme.asia": {
+    "Đóng gói": 6505
+  },
+  "vynt@boxme.asia": {
+    "Đóng gói": 6158
+  },
+  "hienpt@boxme.asia": {
+    "Đóng gói": 5970
+  },
+  "thupld@boxme.asia": {
+    "Đóng gói": 5655
+  },
+  "hungbum@boxme.asia": {
+    "Đóng gói": 5148
+  },
+  "manhlt1@boxme.asia": {
+    "Đóng gói": 4921
+  },
+  "giaunv@boxme.asia": {
+    "Đóng gói": 4874
+  },
+  "tramntp@boxme.asia": {
+    "Đóng gói": 4839
+  },
+  "huyentt@boxme.asia": {
+    "Đóng gói": 4727
+  },
+  "anhlp@boxme.asia": {
+    "Đóng gói": 4603
+  },
+  "giaultn@boxme.asia": {
+    "Đóng gói": 4490
+  },
+  "tuyenntn@boxme.asia": {
+    "Đóng gói": 4310
+  },
+  "lent2@boxme.asia": {
+    "Đóng gói": 4292
+  },
+  "anhth@boxme.asia": {
+    "Đóng gói": 4224
+  },
+  "nhuvhm@boxme.asia": {
+    "Đóng gói": 4044
+  },
+  "baivk@boxme.asia": {
+    "Đóng gói": 4034
+  },
+  "autm@boxme.asia": {
+    "Đóng gói": 3995
+  },
+  "thuha@boxme.asia": {
+    "Đóng gói": 3790
+  },
+  "datpv@boxme.asia": {
+    "Đóng gói": 3750
+  },
+  "sonlv@boxme.asia": {
+    "Đóng gói": 3648
+  },
+  "hoald@boxme.asia": {
+    "Đóng gói": 3622
+  },
+  "trannnb@boxme.asia": {
+    "Đóng gói": 3591
+  },
+  "thuyntt1@boxme.asia": {
+    "Đóng gói": 3522
+  },
+  "bunhny@boxme.asia": {
+    "Đóng gói": 3521
+  },
+  "nganltt@boxme.asia": {
+    "Đóng gói": 3514
+  },
+  "trungnd@boxme.asia": {
+    "Đóng gói": 3465
+  },
+  "truongtv@boxme.asia": {
+    "Đóng gói": 3385
+  },
+  "083199004325@boxme.asia": {
+    "Đóng gói": 3323
+  },
+  "nhutth@boxme.asia": {
+    "Đóng gói": 3260
+  },
+  "thuna1@boxme.asia": {
+    "Đóng gói": 2684
+  },
+  "089306021396@boxme.asia": {
+    "Đóng gói": 2657
+  },
+  "khangtn@boxme.asia": {
+    "Đóng gói": 2580
+  },
+  "nhihty1@boxme.asia": {
+    "Đóng gói": 1297
+  },
+  "056301001736@boxme.asia": {
+    "Đóng gói": 1220
+  },
+  "080204002140@boxme.asia": {
+    "Đóng gói": 750
+  },
+  "096192007183@boxme.asia": {
+    "Đóng gói": 722
+  },
+  "087306016628@boxme.asia": {
+    "Đóng gói": 577
+  },
+  "079304034332@boxme.asia": {
+    "Đóng gói": 525
+  },
+  "079192026838@boxme.asia": {
+    "Đóng gói": 478
+  },
+  "079200008044@boxme.asia": {
+    "Đóng gói": 408
+  },
+  "089184003797@boxme.asia": {
+    "Đóng gói": 391
+  },
+  "079308034900@boxme.asia": {
+    "Đóng gói": 345
+  },
+  "051304011465@boxme.asia": {
+    "Đóng gói": 340
+  },
+  "079307045210@boxme.asia": {
+    "Đóng gói": 312
+  },
+  "079308017763@boxme.asia": {
+    "Đóng gói": 230
+  },
+  "051305008913@boxme.asia": {
+    "Đóng gói": 221
+  },
+  "075305001589@boxme.asia": {
+    "Đóng gói": 217
+  },
+  "087196015389@boxme.asia": {
+    "Đóng gói": 143
+  },
+  "091307001625@boxme.asia": {
+    "Đóng gói": 111
+  },
+  "079198006497@boxme.asia": {
+    "Đóng gói": 105
+  },
+  "079198025451@boxme.asia": {
+    "Đóng gói": 105
+  },
+  "072307001812@boxme.asia": {
+    "Đóng gói": 97
+  },
+  "087307012438@boxme.asia": {
+    "Đóng gói": 95
+  },
+  "079307009813@boxme.asia": {
+    "Đóng gói": 92
+  },
+  "duytnh@boxme.asia": {
+    "Đóng gói": 79
+  },
+  "095307007396@boxme.asia": {
+    "Đóng gói": 75
+  },
+  "060307010952@boxme.asia": {
+    "Đóng gói": 74
+  },
+  "096194001950@boxme.asia": {
+    "Đóng gói": 74
+  },
+  "075304020567@boxme.asia": {
+    "Đóng gói": 74
+  },
+  "079304000887@boxme.asia": {
+    "Đóng gói": 71
+  },
+  "079307018723@boxme.asia": {
+    "Đóng gói": 68
+  },
+  "094307012233@boxme.asia": {
+    "Đóng gói": 67
+  },
+  "052306007501@boxme.asia": {
+    "Đóng gói": 21
+  },
+  "052308003772@boxme.asia": {
+    "Đóng gói": 18
+  },
+  "051207022323@boxme.asia": {
+    "Đóng gói": 13
+  },
+  "truongnn@boxme.asia": {
+    "Bàn giao": 78681
+  },
+  "thongnm1@boxme.asia": {
+    "Bàn giao": 77323
+  },
+  "lamtd@boxme.asia": {
+    "Bàn giao": 75178
+  }
+};
+
+    P1DATA['2026-07'] = {
+  "depts": {
+    "Receiver": {
+      "Chính thức": {
+        "nv": 8,
+        "dat_100": 6,
+        "dept_pts": 4429845,
+        "avg_pct": 110.7
+      },
+      "Thời vụ": null
+    },
+    "Controller": {
+      "Chính thức": {
+        "nv": 8,
+        "dat_100": 8,
+        "dept_pts": 1114594,
+        "avg_pct": 154.8
+      },
+      "Thời vụ": null
+    },
+    "Picker": {
+      "Chính thức": {
+        "nv": 13,
+        "dat_100": 5,
+        "dept_pts": 591192,
+        "avg_pct": 91.0
+      },
+      "Thời vụ": null
+    },
+    "Packer": {
+      "Chính thức": {
+        "nv": 34,
+        "dat_100": 7,
+        "dept_pts": 142309,
+        "avg_pct": 83.7
+      },
+      "Thời vụ": {
+        "nv": 33,
+        "dat_100": 0,
+        "dept_pts": 14019,
+        "avg_pct": 8.5
+      }
+    },
+    "Handover": {
+      "Chính thức": {
+        "nv": 3,
+        "dat_100": 0,
+        "dept_pts": 231182,
+        "avg_pct": null
+      },
+      "Thời vụ": null
+    }
+  },
+  "tong_kho": {
+    "total_nv": 99,
+    "dat_100": 26
+  }
+};
+
+    WORKDAYS['2026-07'] = {
+  "hentv@boxme.asia": {
+    "name": "Trương Văn Hẹn",
+    "pos": "Receiver",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "vietnt@boxme.asia": {
+    "name": "Nguyễn Thanh Việt",
+    "pos": "Receiver",
+    "type": "Chính thức",
+    "ngay_cong": 18
+  },
+  "minhdt@boxme.asia": {
+    "name": "Đặng Thành Minh",
+    "pos": "Receiver",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "tuanndm@boxme.asia": {
+    "name": "Nguyễn Đỗ Minh Tuấn",
+    "pos": "Receiver",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "thaidh@boxme.asia": {
+    "name": "Đinh Hoàng Thái",
+    "pos": "Receiver",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "sonth@boxme.asia": {
+    "name": "Thái Hồng Sơn",
+    "pos": "Receiver",
+    "type": "Chính thức",
+    "ngay_cong": 18
+  },
+  "chuyendt@boxme.asia": {
+    "name": "Đậu Thị Chuyên",
+    "pos": "Receiver",
+    "type": "Chính thức",
+    "ngay_cong": 13
+  },
+  "longnhk@boxme.asia": {
+    "name": "Nguyễn Hữu Kim Long",
+    "pos": "Receiver",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "tuanp@boxme.asia": {
+    "name": "Phạm Tuấn",
+    "pos": "Controller",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "doanlv@boxme.vn": {
+    "name": "Lê Văn Đoàn",
+    "pos": "Controller",
+    "type": "Chính thức",
+    "ngay_cong": 19
+  },
+  "hungpq@boxme.asia": {
+    "name": "Phan Quốc Hưng",
+    "pos": "Controller",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "hieutm1@boxme.asia": {
+    "name": "Trần Minh Hiếu",
+    "pos": "Controller",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "quangnt2@boxme.asia": {
+    "name": "Nguyễn Thế Quang",
+    "pos": "Controller",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "haint@boxme.asia": {
+    "name": "Nguyễn Tứ Hải",
+    "pos": "Controller",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "ngocnp@boxme.vn": {
+    "name": "Nguyễn Phú Ngọc",
+    "pos": "Controller",
+    "type": "Chính thức",
+    "ngay_cong": 12
+  },
+  "quangnt1@boxme.asia": {
+    "name": "Nguyễn Thành Quang",
+    "pos": "Controller",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "ngocptm@boxme.asia": {
+    "name": "Phan Thị Mỹ Ngọc",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "ngay_cong": 19
+  },
+  "viettq@boxme.asia": {
+    "name": "Trịnh Quốc Việt",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "huytg@boxme.asia": {
+    "name": "Trương Gia Huy",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "ngannt1@boxme.asia": {
+    "name": "Nguyễn Thanh Ngàn",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "vonv@boxme.asia": {
+    "name": "Nguyễn Văn Vô",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "cuongnc1@boxme.asia": {
+    "name": "Nguyễn Chí Cường",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "haitm@boxme.asia": {
+    "name": "Trần Minh Hải",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "nguyenhk@boxme.asia": {
+    "name": "Huỳnh Khắc Nguyên",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "ngay_cong": 15
+  },
+  "thachhn@boxme.asia": {
+    "name": "Hà Ngọc Thạch",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "ngay_cong": 14
+  },
+  "danhnt1@boxme.asia": {
+    "name": "Nguyễn Thành Danh",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "ngay_cong": 15
+  },
+  "duynd1@boxme.asia": {
+    "name": "Nguyễn Đình Duy",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "phucnh1@boxme.asia": {
+    "name": "Nguyễn Hoàng Phúc",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "khuongnh@boxme.asia": {
+    "name": "Nguyễn Hoài Khương",
+    "pos": "Picker",
+    "type": "Chính thức",
+    "ngay_cong": 10
+  },
+  "quyenltb1@boxme.asia": {
+    "name": "Lê Thị Bích Quyên",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 18
+  },
+  "lienvtt@boxme.asia": {
+    "name": "Vũ Thị Thùy Liên",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "khamnd@boxme.asia": {
+    "name": "Nguyễn Đức Khâm",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "vynt@boxme.asia": {
+    "name": "Ngô Thị Vy",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "hienpt@boxme.asia": {
+    "name": "Phạm Thị Hiển",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 18
+  },
+  "thupld@boxme.asia": {
+    "name": "Phạm Lý Duy Thư",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "hungbum@boxme.asia": {
+    "name": "Bùi Minh Hưng",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "manhlt1@boxme.asia": {
+    "name": "Lộc Thế Mạnh",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 18
+  },
+  "giaunv@boxme.asia": {
+    "name": "Nguyễn Văn Giàu",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "tramntp@boxme.asia": {
+    "name": "Nguyễn Thị Phúc Trâm",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "huyentt@boxme.asia": {
+    "name": "Thái Thị Huyền",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "anhlp@boxme.asia": {
+    "name": "Lê Phạm Anh",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 18
+  },
+  "giaultn@boxme.asia": {
+    "name": "Lê Thị Ngọc Giàu",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 15
+  },
+  "tuyenntn@boxme.asia": {
+    "name": "Nguyễn Thị Ngọc Tuyền",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "lent2@boxme.asia": {
+    "name": "Nguyễn Thị Lê",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "anhth@boxme.asia": {
+    "name": "Trần Hoàng Anh",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "nhuvhm@boxme.asia": {
+    "name": "Võ Hồ Mỹ Như",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "baivk@boxme.asia": {
+    "name": "Vũ Kim Bài",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "autm@boxme.asia": {
+    "name": "Trần Mỹ Âu",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "thuha@boxme.asia": {
+    "name": "Huỳnh Anh Thư",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "datpv@boxme.asia": {
+    "name": "Võ Phúc Đạt",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 15
+  },
+  "sonlv@boxme.asia": {
+    "name": "Lê Văn Sơn",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "hoald@boxme.asia": {
+    "name": "Lưu Đức Hòa",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "trannnb@boxme.asia": {
+    "name": "Nguyễn Ngọc Bích Trân",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "thuyntt1@boxme.asia": {
+    "name": "Nguyễn Thị Thanh Thúy",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 15
+  },
+  "bunhny@boxme.asia": {
+    "name": "Neáng Bunh Ny",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "nganltt@boxme.asia": {
+    "name": "Lê Thị Thu Ngân",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "trungnd@boxme.asia": {
+    "name": "Nguyễn Đức Trung",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "truongtv@boxme.asia": {
+    "name": "Thạch Văn Trương",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 18
+  },
+  "083199004325@boxme.asia": {
+    "name": "Huỳnh Thị Ngọc Diễm",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 13
+  },
+  "nhutth@boxme.asia": {
+    "name": "Trần Hoàng Nhứt",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "thuna1@boxme.asia": {
+    "name": "Nguyễn Anh Thư",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 15
+  },
+  "089306021396@boxme.asia": {
+    "name": "Văn Thị Yến Nhi",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 11
+  },
+  "khangtn@boxme.asia": {
+    "name": "Nguyễn Trường Khang",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 16
+  },
+  "nhihty1@boxme.asia": {
+    "name": "Huỳnh Thị Yến Nhi",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 7
+  },
+  "056301001736@boxme.asia": {
+    "name": "Trần Nguyễn Trà My",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 4
+  },
+  "080204002140@boxme.asia": {
+    "name": "Lê Nguyễn Minh Luân",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 2
+  },
+  "096192007183@boxme.asia": {
+    "name": "lâm kiều ny",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 3
+  },
+  "087306016628@boxme.asia": {
+    "name": "Thái Thị Ngọc Hân",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 2
+  },
+  "079304034332@boxme.asia": {
+    "name": "Hà Thục Trang",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 3
+  },
+  "079192026838@boxme.asia": {
+    "name": "Giang Thụy Kim Xuân",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 3
+  },
+  "079200008044@boxme.asia": {
+    "name": "NGUYEN HOANG KHANG",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 2
+  },
+  "089184003797@boxme.asia": {
+    "name": "nguyễn thị bích tuyền",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 3
+  },
+  "079308034900@boxme.asia": {
+    "name": "Yến Vân",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 2
+  },
+  "051304011465@boxme.asia": {
+    "name": "Trần Thị Thu Trâm",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 2
+  },
+  "079307045210@boxme.asia": {
+    "name": "Nguyễn Thị Thanh Trúc",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 2
+  },
+  "079308017763@boxme.asia": {
+    "name": "Tuyết Trinh",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 2
+  },
+  "051305008913@boxme.asia": {
+    "name": "Nguyễn Thị Thu Hiền",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 1
+  },
+  "075305001589@boxme.asia": {
+    "name": "Trần Tuyết Trinh",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 1
+  },
+  "087196015389@boxme.asia": {
+    "name": "Thạch Thiên",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 2
+  },
+  "091307001625@boxme.asia": {
+    "name": "Trần Quỳnh Anh",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 1
+  },
+  "079198006497@boxme.asia": {
+    "name": "Trần Sở Nhi",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 2
+  },
+  "079198025451@boxme.asia": {
+    "name": "Lê Kim Tiền",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 2
+  },
+  "072307001812@boxme.asia": {
+    "name": "Phạm Thị Thanh Quí",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 2
+  },
+  "087307012438@boxme.asia": {
+    "name": "hồ thị thúy ngân",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 2
+  },
+  "079307009813@boxme.asia": {
+    "name": "Poi Kim",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 1
+  },
+  "duytnh@boxme.asia": {
+    "name": "Thạch Nguyễn Hữu Duy",
+    "pos": "Packer",
+    "type": "Chính thức",
+    "ngay_cong": 1
+  },
+  "095307007396@boxme.asia": {
+    "name": "Lâm Thái Phương",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 2
+  },
+  "060307010952@boxme.asia": {
+    "name": "Nguyễn Hà My",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 2
+  },
+  "096194001950@boxme.asia": {
+    "name": "Nguyễn Hồng Nhiên",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 2
+  },
+  "075304020567@boxme.asia": {
+    "name": "Trịnh phương thi",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 1
+  },
+  "079304000887@boxme.asia": {
+    "name": "Nhan Thuý Hạnh",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 1
+  },
+  "079307018723@boxme.asia": {
+    "name": "Khanh Khanh",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 1
+  },
+  "094307012233@boxme.asia": {
+    "name": "Nguyễn Lâm Kiều My",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 2
+  },
+  "052306007501@boxme.asia": {
+    "name": "Tran Thi Nhu Quynh",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 1
+  },
+  "052308003772@boxme.asia": {
+    "name": "Trần Hồng Phúc",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 1
+  },
+  "051207022323@boxme.asia": {
+    "name": "Nguyễn Võ Hồng Minh",
+    "pos": "Packer",
+    "type": "Thời vụ",
+    "ngay_cong": 1
+  },
+  "truongnn@boxme.asia": {
+    "name": "Nguyễn Nhựt Trường",
+    "pos": "Handover",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  },
+  "thongnm1@boxme.asia": {
+    "name": "Nguyễn Minh Thông",
+    "pos": "Handover",
+    "type": "Chính thức",
+    "ngay_cong": 18
+  },
+  "lamtd@boxme.asia": {
+    "name": "Trịnh Duy Lâm",
+    "pos": "Handover",
+    "type": "Chính thức",
+    "ngay_cong": 17
+  }
+};
+
+    META['2026-07'] = {
+  "date_from": "2026-07-01",
+  "date_to": "2026-07-19",
+  "total_rows_csv": 1199,
+  "total_rows_used": 1137
+};
+
+    // Cấu hình hạng mục hiển thị / tính điểm theo từng bộ phận
+    const DEPT_CONFIG = {
+      Receiver:   { label: 'Receiver',   key: 'Receiver',   shown: [
+  "Nhận hàng",
+  "Hạ tải",
+  "Dán Nhãn",
+  "Nhập liệu",
+  "Kiểm hoàn",
+  "Đóng gói"
+],   counted: [
+  "Nhận hàng",
+  "Hạ tải",
+  "Dán Nhãn"
+] },
+      Controller: { label: 'Controller', key: 'Controller', shown: [
+  "Lưu kho DR",
+  "Lưu kho PA",
+  "Chuyển vị trí",
+  "Kiểm kho",
+  "Đóng gói"
+], counted: [
+  "Lưu kho DR",
+  "Lưu kho PA",
+  "Chuyển vị trí"
+] },
+      Picker:     { label: 'Pick',       key: 'Picker',     shown: [
+  "Lấy hàng",
+  "Lưu kho PA",
+  "Lưu kho DR",
+  "Chuyển vị trí"
+],     counted: [
+  "Lấy hàng"
+] },
+      Packer:     { label: 'Pack',       key: 'Packer',     shown: [
+  "Đóng gói"
+],     counted: [
+  "Đóng gói"
+] },
+      Handover:   { label: 'Handover',   key: 'Handover',   shown: [
+  "Bàn giao"
+],   counted: [
+  "Bàn giao"
+] }
+    };
+    const DEPT_ORDER = ['Receiver','Controller','Picker','Packer','Handover'];
+
+    // Thứ tự cố định hiển thị nhân viên bộ phận Receiver (theo yêu cầu)
+    const CUSTOM_ORDER = {
+      Receiver: [
+  "hentv@boxme.asia",
+  "thaidh@boxme.asia",
+  "vietnt@boxme.asia",
+  "longnhk@boxme.asia",
+  "sonth@boxme.asia",
+  "minhdt@boxme.asia",
+  "tuanndm@boxme.asia",
+  "chuyendt@boxme.asia"
+]
+    };
+
+    // ============ RENDER LOGIC ============
+    const monthKeys = Object.keys(P1DATA).sort();
+    const monthSelect = document.getElementById('monthSelect');
+    monthKeys.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = m;
+      monthSelect.appendChild(opt);
+    });
+
+    let currentMonth = monthKeys[monthKeys.length - 1];
+    let activeTab = DEPT_ORDER[0];
+    const PAGE_SIZE = 10;
+    const MULTI_PAGE_SIZE = 15; // giới hạn số NV mỗi bảng con (Pack, Pick) khi hiển thị nhiều bảng theo hàng
+    // Trạng thái lọc Loại nhân viên theo từng bộ phận: 'all' | 'Chính thức' | 'Thời vụ'
+    const deptTypeFilter = {};
+    DEPT_ORDER.forEach(k => deptTypeFilter[k] = 'all');
+    // Trạng thái phân trang cho từng bảng: { rowsData:[{html,name,email}], page, colCount }
+    let PAGE_STATE = {};
+
+    monthSelect.value = currentMonth;
+    monthSelect.addEventListener('change', () => {
+      currentMonth = monthSelect.value;
+      renderAll();
+    });
+
+    function fmtNum(n){
+      if (n === null || n === undefined) return '—';
+      return Math.round(n).toLocaleString('vi-VN');
+    }
+    function esc(s){
+      return (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function renderMeta(){
+      const meta = META[currentMonth];
+      document.getElementById('metaInfo').textContent =
+        `Kỳ báo cáo: ${currentMonth} · Dữ liệu từ ${meta.date_from} đến ${meta.date_to} · ${meta.total_rows_used}/${meta.total_rows_csv} dòng được sử dụng`;
+      document.getElementById('lastUpdate').textContent = meta.date_to;
+    }
+
+    // Lấy danh sách nhân viên của 1 bộ phận (gộp RAW_EMPLOYEES + HO_EMPS)
+    function getDeptEmployees(deptKey){
+      const list = RAW_EMPLOYEES[currentMonth].filter(e => e.pos === deptKey);
+      const ho = HO_EMPS[currentMonth].filter(e => e.pos === deptKey);
+      return list.concat(ho);
+    }
+
+    // Sắp xếp: theo thứ tự tuỳ chỉnh (nếu có) hoặc theo tổng điểm KPI giảm dần
+    function sortEmpList(deptKey, list){
+      const order = CUSTOM_ORDER[deptKey];
+      if (order){
+        const idx = email => { const i = order.indexOf(email); return i === -1 ? 999 : i; };
+        return list.slice().sort((a,b) => idx(a.email) - idx(b.email));
+      }
+      return list.slice().sort((a,b) => (b.total||0) - (a.total||0));
+    }
+
+    // ---------- Phân trang dùng chung cho mọi bảng ----------
+    // size (tuỳ chọn): số dòng/trang riêng cho bảng này, mặc định dùng PAGE_SIZE chung.
+    function registerTable(tableId, rowsData, colCount, size){
+      PAGE_STATE[tableId] = { rowsData, colCount, page: 1, size: size || PAGE_SIZE };
+    }
+
+    function getVisibleRows(tableId){
+      const q = document.getElementById('globalSearch').value.trim().toLowerCase();
+      const state = PAGE_STATE[tableId];
+      if (!state) return [];
+      if (!q) return state.rowsData;
+      return state.rowsData.filter(r => r.name.includes(q) || r.email.includes(q));
+    }
+
+    function renderTableBody(tableId){
+      const state = PAGE_STATE[tableId];
+      if (!state) return;
+      const size = state.size || PAGE_SIZE;
+      const visible = getVisibleRows(tableId);
+      const totalPages = Math.max(1, Math.ceil(visible.length / size));
+      if (state.page > totalPages) state.page = totalPages;
+      if (state.page < 1) state.page = 1;
+      const start = (state.page - 1) * size;
+      const pageRows = visible.slice(start, start + size);
+      const tbody = document.getElementById('tbody-' + tableId);
+      if (tbody){
+        tbody.innerHTML = pageRows.length
+          ? pageRows.map(r => r.html).join('')
+          : `<tr><td colspan="${state.colCount}" class="empty">Không có dữ liệu phù hợp</td></tr>`;
+      }
+      renderPagination(tableId, visible.length, totalPages);
+    }
+
+    function renderPagination(tableId, totalRows, totalPages){
+      const el = document.getElementById('pag-' + tableId);
+      if (!el) return;
+      const state = PAGE_STATE[tableId];
+      const size = state.size || PAGE_SIZE;
+      if (totalRows <= size){ el.innerHTML = ''; return; }
+      let html = `<span style="font-size:11px;color:var(--muted);margin-right:auto;">${totalRows} nhân viên</span>`;
+      html += `<button class="pg-btn" data-table="${tableId}" data-action="prev" ${state.page===1?'disabled':''}>‹</button>`;
+      for (let p = 1; p <= totalPages; p++){
+        html += `<button class="pg-btn ${p===state.page?'active':''}" data-table="${tableId}" data-action="goto" data-page="${p}">${p}</button>`;
+      }
+      html += `<button class="pg-btn" data-table="${tableId}" data-action="next" ${state.page===totalPages?'disabled':''}>›</button>`;
+      el.innerHTML = html;
+      el.querySelectorAll('.pg-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tid = btn.dataset.table;
+          const st = PAGE_STATE[tid];
+          const sz = st.size || PAGE_SIZE;
+          const visible = getVisibleRows(tid);
+          const tp = Math.max(1, Math.ceil(visible.length / sz));
+          if (btn.dataset.action === 'prev') st.page = Math.max(1, st.page - 1);
+          else if (btn.dataset.action === 'next') st.page = Math.min(tp, st.page + 1);
+          else st.page = parseInt(btn.dataset.page, 10);
+          renderTableBody(tid);
+        });
+      });
+    }
+
+    // Bảng tổng KPI (điểm theo hạng mục) cho 1 nhóm (bộ phận + loại) — trả về HTML khung (tbody rỗng, chờ phân trang đổ dữ liệu)
+    function buildKpiTable(deptKey, cfg, type, employees){
+      const detailAll = RAW_EMP_DETAIL[currentMonth];
+      const shown = cfg.shown;
+      const counted = new Set(cfg.counted);
+      const grp = sortEmpList(deptKey, employees.filter(e => e.type === type));
+      if (!grp.length) return '';
+
+      // Controller: hiển thị thêm cột "Tổng điểm (tính Kiểm kho)" bên cạnh Tổng điểm gốc.
+      // Kiểm kho vẫn là cột tham khảo (TK) trong bảng hạng mục, chỉ được cộng thêm ở cột tổng điểm thứ 2 này.
+      const isController = deptKey === 'Controller';
+
+      const tableId = `kpi-${deptKey}-${type}`.replace(/\s+/g,'_');
+      const theadCols = shown.map(cat => {
+        const isCounted = counted.has(cat);
+        return `<th class="${isCounted ? '' : 'ref-col'}">${esc(cat)}${isCounted ? '' : ' <span title="Chỉ tham khảo, không cộng vào tổng điểm">(TK)</span>'}</th>`;
+      }).join('');
+      const totalHeadCols = isController
+        ? `<th class="total-col">Tổng điểm (không tính Kiểm kho)</th><th class="total-col">Tổng điểm (tính Kiểm kho)</th>`
+        : `<th class="total-col">Tổng điểm</th>`;
+
+      const rowsData = grp.map(e => {
+        const detail = detailAll[e.email] || {};
+        const cells = shown.map(cat => {
+          const isCounted = counted.has(cat);
+          const v = detail[cat] || 0;
+          return `<td class="${isCounted ? '' : 'ref-col'}">${fmtNum(v)}</td>`;
+        }).join('');
+        const totalCells = isController
+          ? `<td class="total-col">${fmtNum(e.total)}</td><td class="total-col">${fmtNum((e.total||0) + (detail['Kiểm kho']||0))}</td>`
+          : `<td class="total-col">${fmtNum(e.total)}</td>`;
+        const html = `<tr>
+          <td>
+            <div class="name-cell">${esc(e.name)}</div>
+            <div class="email-cell">${esc(e.email)}</div>
+          </td>
+          ${cells}
+          ${totalCells}
+        </tr>`;
+        return { html, name: e.name.toLowerCase(), email: e.email.toLowerCase() };
+      });
+
+      const sums = shown.map(cat => grp.reduce((s,e) => s + ((detailAll[e.email]||{})[cat] || 0), 0));
+      const totalSum = grp.reduce((s,e) => s + (e.total||0), 0);
+      const totalSumWithKho = grp.reduce((s,e) => s + (e.total||0) + ((detailAll[e.email]||{})['Kiểm kho']||0), 0);
+      const footerCells = sums.map(s => `<td>${fmtNum(s)}</td>`).join('');
+      const footerTotalCells = isController
+        ? `<td class="total-col">${fmtNum(totalSum)}</td><td class="total-col">${fmtNum(totalSumWithKho)}</td>`
+        : `<td class="total-col">${fmtNum(totalSum)}</td>`;
+      const colCount = shown.length + (isController ? 3 : 2);
+
+      registerTable(tableId, rowsData, colCount);
+
+      return `
+      <div class="subsection">
+        <h3>Bảng tổng KPI <span class="badge ${type==='Chính thức'?'ct':'tv'} type-badge">${type}</span></h3>
+        <div class="panel table-scroll">
+          <table>
+            <thead><tr><th>Nhân viên</th>${theadCols}${totalHeadCols}</tr></thead>
+            <tbody id="tbody-${tableId}"></tbody>
+            <tfoot><tr><td>Tổng cộng (${grp.length} NV)</td>${footerCells}${footerTotalCells}</tr></tfoot>
+          </table>
+          <div class="pagination" id="pag-${tableId}"></div>
+        </div>
+      </div>`;
+    }
+
+    // Bảng tổng KPI dạng chia thành nhiều bảng nhỏ (10 NV/bảng), không cần chọn trang, có cột STT.
+    // Hiện chỉ dùng riêng cho bộ phận Pack theo yêu cầu.
+    function buildKpiTableMultiple(deptKey, cfg, type, employees){
+      const detailAll = RAW_EMP_DETAIL[currentMonth];
+      const shown = cfg.shown;
+      const counted = new Set(cfg.counted);
+      const grp = sortEmpList(deptKey, employees.filter(e => e.type === type));
+      if (!grp.length) return '';
+
+      const theadCols = shown.map(cat => {
+        const isCounted = counted.has(cat);
+        return `<th class="${isCounted ? '' : 'ref-col'}">${esc(cat)}${isCounted ? '' : ' <span title="Chỉ tham khảo, không cộng vào tổng điểm">(TK)</span>'}</th>`;
+      }).join('');
+
+      const chunks = [];
+      for (let i = 0; i < grp.length; i += MULTI_PAGE_SIZE) chunks.push(grp.slice(i, i + MULTI_PAGE_SIZE));
+
+      const tablesHtml = chunks.map((chunk, ci) => {
+        const rows = chunk.map((e, i) => {
+          const stt = ci * MULTI_PAGE_SIZE + i + 1;
+          const detail = detailAll[e.email] || {};
+          const cells = shown.map(cat => {
+            const isCounted = counted.has(cat);
+            const v = detail[cat] || 0;
+            return `<td class="${isCounted ? '' : 'ref-col'}">${fmtNum(v)}</td>`;
+          }).join('');
+          return `<tr>
+            <td class="stt-col">${stt}</td>
+            <td>
+              <div class="name-cell">${esc(e.name)}</div>
+              <div class="email-cell">${esc(e.email)}</div>
+            </td>
+            ${cells}
+            <td class="total-col">${fmtNum(e.total)}</td>
+          </tr>`;
+        }).join('');
+
+        const sums = shown.map(cat => chunk.reduce((s,e) => s + ((detailAll[e.email]||{})[cat] || 0), 0));
+        const totalSum = chunk.reduce((s,e) => s + (e.total||0), 0);
+        const footerCells = sums.map(s => `<td>${fmtNum(s)}</td>`).join('');
+
+        return `
+        <div class="panel table-scroll">
+          <table>
+            <thead><tr><th class="stt-col">STT</th><th>Nhân viên</th>${theadCols}<th class="total-col">Tổng điểm</th></tr></thead>
+            <tbody>${rows}</tbody>
+            <tfoot><tr><td class="stt-col"></td><td>Tổng cộng (${chunk.length} NV)</td>${footerCells}<td class="total-col">${fmtNum(totalSum)}</td></tr></tfoot>
+          </table>
+        </div>`;
+      }).join('');
+
+      return `
+      <div class="subsection">
+        <h3>Bảng tổng KPI <span class="badge ${type==='Chính thức'?'ct':'tv'} type-badge">${type}</span></h3>
+        <div class="kpi-multi-row">${tablesHtml}</div>
+      </div>`;
+    }
+
+    // Bảng ngày công & tổng điểm KPI cho 1 bộ phận (theo loại đã lọc), sắp xếp theo tổng điểm giảm dần
+    // type (tuỳ chọn): nếu truyền vào ('Chính thức'/'Thời vụ') sẽ render bảng riêng cho loại đó
+    // (bỏ cột Loại, thêm badge loại vào tiêu đề) — dùng cho bộ phận Pack theo yêu cầu tách bảng.
+    // Nếu không truyền, giữ nguyên hành vi cũ: 1 bảng gộp mọi loại kèm cột Loại.
+    // pageSize (tuỳ chọn): số NV/trang riêng cho bảng này, mặc định PAGE_SIZE chung.
+    function buildWorkdayTable(deptKey, employees, type, pageSize){
+      const wd = WORKDAYS[currentMonth];
+      const grp = employees.slice().sort((a,b) => (b.total||0) - (a.total||0));
+      const titleBadge = type ? ` <span class="badge ${type==='Chính thức'?'ct':'tv'} type-badge">${type}</span>` : '';
+      if (!grp.length){
+        return `
+      <div class="subsection">
+        <h3>Ngày công &amp; Tổng điểm KPI${titleBadge}</h3>
+        <div class="empty">Không có dữ liệu phù hợp bộ lọc</div>
+      </div>`;
+      }
+
+      const tableId = `wd-${deptKey}-${type ? type.replace(/\s+/g,'_') : 'all'}`;
+      const rowsData = grp.map(e => {
+        const w = wd[e.email] || {ngay_cong: 0};
+        const typeCell = type ? '' : `<td><span class="badge ${e.type==='Chính thức'?'ct':'tv'}">${e.type}</span></td>`;
+        const html = `<tr>
+          <td>
+            <div class="name-cell">${esc(e.name)}</div>
+            <div class="email-cell">${esc(e.email)}</div>
+          </td>
+          ${typeCell}
+          <td>${fmtNum(w.ngay_cong)}</td>
+          <td class="total-col">${fmtNum(e.total)}</td>
+        </tr>`;
+        return { html, name: e.name.toLowerCase(), email: e.email.toLowerCase() };
+      });
+      const totalWd = grp.reduce((s,e) => s + ((wd[e.email]||{}).ngay_cong || 0), 0);
+      const totalPts = grp.reduce((s,e) => s + (e.total||0), 0);
+      const colCount = type ? 3 : 4;
+      const theadTypeCol = type ? '' : '<th>Loại</th>';
+      const footerTypeCol = type ? '' : '<td></td>';
+
+      registerTable(tableId, rowsData, colCount, pageSize);
+
+      return `
+      <div class="subsection">
+        <h3>Ngày công &amp; Tổng điểm KPI${titleBadge}</h3>
+        <div class="panel table-scroll">
+          <table>
+            <thead><tr><th>Nhân viên</th>${theadTypeCol}<th>Ngày công</th><th class="total-col">Tổng điểm</th></tr></thead>
+            <tbody id="tbody-${tableId}"></tbody>
+            <tfoot><tr><td>Tổng cộng (${grp.length} NV)</td>${footerTypeCol}<td>${fmtNum(totalWd)}</td><td class="total-col">${fmtNum(totalPts)}</td></tr></tfoot>
+          </table>
+          <div class="pagination" id="pag-${tableId}"></div>
+        </div>
+      </div>`;
+    }
+
+    function renderTabBar(){
+      const tabBar = document.getElementById('tabBar');
+      tabBar.innerHTML = DEPT_ORDER.map(deptKey => {
+        const cfg = DEPT_CONFIG[deptKey];
+        const count = getDeptEmployees(deptKey).length;
+        return `<button class="tab-btn${deptKey===activeTab?' active':''}" data-dept="${deptKey}">
+          ${cfg.label}<span class="tab-count">(${count})</span>
+        </button>`;
+      }).join('');
+      tabBar.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeTab = btn.dataset.dept;
+          renderTabBar();
+          showActiveTab();
+        });
+      });
+    }
+
+    function showActiveTab(){
+      document.querySelectorAll('.dept-section').forEach(sec => {
+        sec.classList.toggle('active', sec.dataset.dept === activeTab);
+      });
+    }
+
+    // Render lại nội dung (bảng KPI + bảng ngày công) của 1 bộ phận theo bộ lọc Loại hiện tại
+    function renderDeptContent(deptKey){
+      const cfg = DEPT_CONFIG[deptKey];
+      const employees = getDeptEmployees(deptKey);
+      const filter = deptTypeFilter[deptKey];
+      const filtered = filter === 'all' ? employees : employees.filter(e => e.type === filter);
+
+      const contentEl = document.getElementById('dept-content-' + deptKey);
+      if (!contentEl) return;
+
+      if (!filtered.length){
+        contentEl.innerHTML = `<div class="empty">Không có nhân viên phù hợp bộ lọc</div>`;
+        return;
+      }
+
+      // Bộ phận Pack & Pick: hiển thị Bảng tổng KPI dạng nhiều bảng nhỏ xếp theo hàng (15 NV/bảng, có STT), không phân trang.
+      // Các bộ phận khác: giữ nguyên bảng có phân trang như cũ.
+      const kpiBuilder = (deptKey === 'Packer' || deptKey === 'Picker') ? buildKpiTableMultiple : buildKpiTable;
+      let kpiTables = '';
+      if (filter === 'all' || filter === 'Chính thức') kpiTables += kpiBuilder(deptKey, cfg, 'Chính thức', filtered);
+      if (filter === 'all' || filter === 'Thời vụ') kpiTables += kpiBuilder(deptKey, cfg, 'Thời vụ', filtered);
+
+      // Bộ phận Pack: bảng Ngày công & Tổng điểm KPI chỉ giữ Chính thức (bỏ Thời vụ).
+      // Bộ phận Pick: giới hạn 15 NV/bảng (đủ chứa hết trong 1 bảng, không cần phân trang).
+      // Các bộ phận khác: giữ nguyên 1 bảng gộp như cũ.
+      let wdTable = '';
+      if (deptKey === 'Packer'){
+        if (filter === 'all' || filter === 'Chính thức') wdTable += buildWorkdayTable(deptKey, filtered.filter(e => e.type === 'Chính thức'), 'Chính thức');
+      } else if (deptKey === 'Picker'){
+        wdTable = buildWorkdayTable(deptKey, filtered, null, MULTI_PAGE_SIZE);
+      } else {
+        wdTable = buildWorkdayTable(deptKey, filtered);
+      }
+
+      contentEl.innerHTML = kpiTables + wdTable;
+
+      // đổ dữ liệu trang đầu cho các bảng vừa đăng ký thuộc bộ phận này
+      Object.keys(PAGE_STATE).forEach(tid => {
+        if (tid.includes(deptKey)){
+          renderTableBody(tid);
+        }
+      });
+    }
+
+    function renderDepartments(){
+      const container = document.getElementById('deptContainer');
+      PAGE_STATE = {};
+      let html = '';
+      DEPT_ORDER.forEach(deptKey => {
+        const cfg = DEPT_CONFIG[deptKey];
+        const employees = getDeptEmployees(deptKey);
+        const filterBtns = ['all','Chính thức','Thời vụ'].map(t => {
+          const label = t === 'all' ? 'Tất cả' : t;
+          const active = deptTypeFilter[deptKey] === t;
+          return `<button class="${active?'active':''}" data-dept="${deptKey}" data-type="${t}">${label}</button>`;
+        }).join('');
+        html += `
+        <div class="dept-section" data-dept="${deptKey}">
+          <div class="dept-header-row">
+            <div class="dept-title">${cfg.label} <span class="dept-count">(${employees.length} nhân viên)</span></div>
+            <div class="type-filter">${filterBtns}</div>
+          </div>
+          <div id="dept-content-${deptKey}"></div>
+        </div>`;
+      });
+      container.innerHTML = html;
+
+      document.querySelectorAll('.type-filter button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const deptKey = btn.dataset.dept;
+          deptTypeFilter[deptKey] = btn.dataset.type;
+          document.querySelectorAll(`.type-filter button[data-dept="${deptKey}"]`).forEach(b => {
+            b.classList.toggle('active', b.dataset.type === btn.dataset.type);
+          });
+          renderDeptContent(deptKey);
+        });
+      });
+
+      DEPT_ORDER.forEach(deptKey => renderDeptContent(deptKey));
+      showActiveTab();
+    }
+
+    function applySearch(){
+      Object.keys(PAGE_STATE).forEach(tid => {
+        PAGE_STATE[tid].page = 1;
+        renderTableBody(tid);
+      });
+    }
+
+    document.getElementById('globalSearch').addEventListener('input', applySearch);
+
+    function renderAll(){
+      renderMeta();
+      renderTabBar();
+      renderDepartments();
+    }
+
+    renderAll();
+</script>
+</body>
+</html>
